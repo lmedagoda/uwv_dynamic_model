@@ -834,10 +834,10 @@ void DynamicModel::rpmToThrustForce(Eigen::VectorXd &thrustForces,
 	{
 		if(controlInput[i].speed > 0)
 			thrustForces[i] = gThrusterCoeffRPM[i].positive *
-			(fabs(controlInput[i].speed) * controlInput[i].speed);
+			(fabs(controlInput[i].speed/(2*M_PI)) * controlInput[i].speed/(2*M_PI));
 		else
 			thrustForces[i] = gThrusterCoeffRPM[i].negative *
-			(fabs(controlInput[i].speed) * controlInput[i].speed);
+			(fabs(controlInput[i].speed/(2*M_PI)) * controlInput[i].speed/(2*M_PI));
 	}
 }
 
