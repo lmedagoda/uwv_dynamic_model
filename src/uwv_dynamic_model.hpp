@@ -1,7 +1,7 @@
 /***************************************************************************/
-/*  Dynamic model for an underwater vehicle	                               */
+/*  Dynamic model for an underwater vehicle	                           */
 /*                                                                         */
-/* FILE --- uwv_dynamic_model.hpp	                                       */
+/* FILE --- uwv_dynamic_model.hpp	                                   */
 /*                                                                         */
 /* PURPOSE --- Header file for a Dynamic model of an 	                   */
 /*             underwater vehicle. Based on T.I.Fossen & Giovanni Indiveri */
@@ -34,8 +34,8 @@ class DynamicModel : public RK4_SIM
 {
 
 public:
-	DynamicModel(int controlOrder, double samplingTime = 0.01,
-				 int simPerCycle = 10, double initialTime = 0.0);
+	DynamicModel(int controlOrder, int numberOfThrusters, int numberOfCells, int numberOfVectoring, double samplingTime = 0.01,
+		     int simPerCycle = 10, double initialTime = 0.0);
 
 	/**
 	 * Initializes the model parameters. Run this function before sending control
@@ -45,15 +45,15 @@ public:
 
 	/**
 	 * Function for sending PWM commands to the model.
-	 * @param controlInput - PWM commands that should be applied to the model
+	 * @param thrustersInput - PWM commands of thrusters that should be applied to the model
 	 */
-	bool sendPWMCommands(const base::samples::Joints &controlInput);
+	bool sendPWMCommands(const base::samples::Joints &thrustersInput);
 
 	/**
 	 * Function for sending RPM commands to the model.
-	 * @param controlInput - RPM commands that should be applied to the model
+	 * @param controlInput - RPM commands of thrusters that should be applied to the model
 	 */
-	bool sendRPMCommands(const base::samples::Joints &controlInput);
+	bool sendRPMCommands(const base::samples::Joints &thrustersInput);
 
 	/**
 	 * Function for sending Effort commands to the model.
@@ -61,6 +61,17 @@ public:
 	 */
 	bool sendEffortCommands(const base::samples::Joints &controlInput);
 
+	/**
+	 * Function for sending the effort due to dive cells to the model.
+	 * @param cellsInput - Dive cells commands, should be position commands with value between -1 and 1
+	 */
+	bool sendCellsCommands(const base::samples::Joints &cellsInput);
+	
+	/**
+	 * Function for updating the model states using the RK4 integrator.
+	 */
+	bool sendUpdateStates();
+	
 	/**
 	 * Sets the general UWV parameters
 	 * @param uwvParamaters - Structures containing the uwv parameters
@@ -267,7 +278,8 @@ private:
 	/**
 	 *	Initializes the class parameters. Necessary for allowing backwards compability.
 	 */
-	void iniatilizeClass(int controlOrder, double samplingTime = 0.01,
+
+	void iniatilizeClass(int controlOrder, int numberOfThrusters, int numberOfCells, int numberOfVectoring, double samplingTime = 0.01,
 				 	 	 int simPerCycle = 10, double initialTime = 0.0);
 
 	/**
@@ -290,8 +302,19 @@ private:
 	void calcLinDamping(base::Vector6d &linDamping, const base::Vector6d &velocity);
 	void calcQuadDamping(base::Vector6d &quadDamping, const base::Vector6d &velocity);
 	void calcGravityBuoyancy(base::Vector6d &gravitybuoyancy, const base::Vector3d &eulerOrientation);
+	
+	/**
+	 * This function is set to correct the dynamic of a fully coupled model. It accounts for dynamics which are not included in the Fossen model. 
+	 * The shape of this function might need to be changed depending on the nature of the vehicle being modeled. 
+	 * If no correction needed leave the correction coefficients zero in the config file.
+	 */
 	void calcModelCorrection(base::Vector6d &ModelCorrection, const base::Vector6d &velocity);
 
+	/**
+	 * Converts the command position of the dive cells into effort for the vehicle.
+	 */
+	void calcCellsEffect(base::Vector6d &cellsEfforts, const base::samples::Joints &cellsInput, const base::Vector3d &eulerOrientation);
+	
 	/**
 	 * Converts the PWM signal into its equivalent in DC voltage
 	 */
@@ -350,6 +373,12 @@ private:
 	 * @param LiftCoefficients
 	 */
 	void setLiftCoefficients(const base::Vector4d &LiftCoefficients);
+	
+	/**
+	 * Sets the model correction coefficients
+	 * @param CorrectionCoefficients
+	 */
+	void setCorrectionCoefficients(const base::VectorXd &CorrectionCoefficients);
 
 	/**
 	 * Sets the Linear Damping matrices
@@ -446,6 +475,11 @@ private:
 	 */
 	base::Vector6d gEfforts;
 
+		/**
+	 * Vector with forces and moments due to dive cells
+	 */
+	base::Vector6d gCellsEfforts;
+	
 	/**
 	 * Current time
 	 */
@@ -465,6 +499,21 @@ private:
 	 * Number of control inputs
 	 */
 	int gControlOrder;
+
+		/**
+	 * Number of thrusters
+	 */
+	int gNumberOfThrusters;
+	
+		/**
+	 * Number of dive cells
+	 */
+	int gNumberOfCells;
+	
+	/**
+	 * Number of dVectoring Servos
+	 */
+	int gNumberOfVectoring;
 
 
 /**
@@ -517,6 +566,11 @@ private:
 	 * Lift coefficients
 	 */
 	Eigen::Vector4d gLiftCoefficients;
+	
+	/**
+	 * Model correction coefficients
+	 */
+	Eigen::VectorXd gCorrectionCoefficients;
 
 	/**
 	 * Thrusters' coefficients for PWM and RPM
@@ -544,6 +598,9 @@ private:
 
 	base::Vector3d gCenterOfGravity;
 	base::Vector3d gCenterOfBuoyancy;
+	base::VectorXd gCellToForce;
+	base::MatrixXd gCellsPositions;
+	
 	bool gUWVFloat;
 	double gUWVMass;
 	double gUWVVolume;

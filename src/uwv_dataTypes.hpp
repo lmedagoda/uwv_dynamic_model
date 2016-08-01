@@ -36,6 +36,21 @@ namespace underwaterVehicle
 		 * Number of controllable inputs
 		 */
 		int ctrl_order;
+		
+		/**
+	 	 * Number of thrusters
+	 	 */
+		int number_of_Thrusters;
+	
+		/**
+	 	* Number of dive cells. If no cells leave this value zero.
+	 	*/
+		 int number_of_cells;
+
+		/**
+		 * Number of control vectoring servos. If no vectoring servos leave this value zero.
+	  	 */
+		 int number_of_vectoring;
 
 		/**
 		 * Sampling time used in the simulation (in seconds)
@@ -85,6 +100,11 @@ namespace underwaterVehicle
 		 * Lift coefficients (Yuv, Zuw, Muw, Nuv)
 		 */
 		base::Vector4d LiftCoefficients;
+		
+		/**
+		 * coefficient for model correction (Muq, Nur)
+		 */
+		base::VectorXd CorrectionCoefficients;
 
 		/**
 		 * Thrust configuration matrix
@@ -100,6 +120,18 @@ namespace underwaterVehicle
 		 * Distance from the origin of the body-fixed frame to the center of grabity
 		 */
 		base::Vector3d distance_body2centerofgravity;
+		
+		/**
+		 * Vector with the transformation from the input command position of each dive cell to the weight force it produces. 
+		 * This vector should have constants since the transformation is linear.
+		 */
+		base::VectorXd cellinput_to_force;
+		
+		/**
+		 * Vector Matrix with the positions of the dive cells w.r.t the center of the vehicle.(this is different from the input command positions)
+		 * Matrix dimensions should be 3xn, where n is the number of cells. Leave this matrix zero if the vehicle doesn't have any diving cells.
+		 */
+		base::MatrixXd cells_positions;
 
 		/**
 		 * Total mass of the vehicle
@@ -157,7 +189,10 @@ namespace underwaterVehicle
 		double initial_condition[12];
 
 		Parameters():
-			ctrl_order(4),
+			ctrl_order(7),
+			number_of_Thrusters(3),
+			number_of_cells(2),
+			number_of_vectoring(2),
 			samplingtime(0.1),
 			sim_per_cycle(10),
 			massMatrix(Eigen::MatrixXd::Zero(6,6)),
@@ -171,9 +206,12 @@ namespace underwaterVehicle
 			quadDampMatrix(Eigen::MatrixXd::Zero(6,6)),
 			quadDampMatrixNeg(Eigen::MatrixXd::Zero(6,6)),
 			LiftCoefficients(Eigen::VectorXd::Zero(4)),
+			CorrectionCoefficients(Eigen::VectorXd::Zero(2)),
 			thruster_control_matrix(Eigen::MatrixXd::Zero(6,1)),
 			distance_body2centerofbuoyancy(Eigen::VectorXd::Zero(3)),
 			distance_body2centerofgravity(Eigen::VectorXd::Zero(3)),
+			cellinput_to_force(Eigen::VectorXd::Zero(2)),
+			cells_positions(Eigen::MatrixXd::Zero(3,2)),
 			uwv_mass(0),
 			uwv_volume(0),
 			uwv_float(false),
