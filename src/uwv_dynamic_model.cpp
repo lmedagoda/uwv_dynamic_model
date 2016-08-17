@@ -72,6 +72,7 @@ void DynamicModel::iniatilizeClass(int controlOrder, int numberOfThrusters, int 
 		setLinDampingMatrix(Eigen::MatrixXd::Zero(6,6));
 		setQuadDampingMatrix(Eigen::MatrixXd::Zero(6,6));
 		setLiftCoefficients(Eigen::VectorXd::Zero(4));
+		setCorrectionCoefficients(Eigen::VectorXd::Zero(2));
 		setAddedMassMatrix(Eigen::MatrixXd::Zero(6,6));
 		gThrustConfigMatrix = Eigen::MatrixXd::Zero(6,1);
 
@@ -341,6 +342,7 @@ bool DynamicModel::setUWVParameters(const underwaterVehicle::Parameters &uwvPara
 			setCoriolisMatrix(uwvParameters.coriolisMatrix, uwvParameters.coriolisMatrixNeg);
 			setAddedMassMatrix(uwvParameters.AddedMassMatrixPos, uwvParameters.AddedMassMatrixNeg);
 			setLiftCoefficients(uwvParameters.LiftCoefficients);
+			setCorrectionCoefficients(uwvParameters.CorrectionCoefficients);
 			setLinDampingMatrix(uwvParameters.linDampMatrix, uwvParameters.linDampMatrixNeg);
 			setQuadDampingMatrix(uwvParameters.quadDampMatrix, uwvParameters.quadDampMatrixNeg);
 
